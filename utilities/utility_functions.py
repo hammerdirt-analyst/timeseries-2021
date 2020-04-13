@@ -93,6 +93,17 @@ def unpack_survey_results(survey_results):
             each_dict['location']=location
             unpacked.append(each_dict)
     return unpacked
+def unpack_daily_totals(survey_results):
+    unpacked = []
+    for location_data in survey_results:
+        location = location_data['location']
+        for each_list in location_data['results']:
+            day_total = {}
+            day_total['location']=location
+            day_total['date']=each_list[0]
+            day_total['total']=each_list[1]
+            unpacked.append(day_total)
+    return unpacked
 def json_file_to_csv(the_jsons, prefix):
     for obj in the_jsons:
         the_dict = json_file_get(obj[1])
@@ -157,9 +168,9 @@ def get_data_by_date_range(a_df, date_range):
     this_data = a_df[a_df['py_date'].between(date_range[0], date_range[1])]
     return this_data
 def get_code_totals_from_date_range(a_df):
-    return a_df.groupby(['code_id'])["quantity"].aggregate(np.sum).sort_values(ascending=False)
+    return a_df.groupby(['code'])["quantity"].aggregate(np.sum).sort_values(ascending=False)
 def get_code_frequency_from_date_range(data):
-    return a_df.groupby(["code_id"])['code_id'].count().sort_values(ascending=False)
+    return a_df.groupby(["code"])['code'].count().sort_values(ascending=False)
 def get_num_samps(a_df):
     return a_df[['location_id', 'py_date','quantity']].groupby(['location_id', 'py_date']).sum().count().values[0]
 def get_tuples_from_series(a_df):
@@ -172,7 +183,6 @@ def get_the_rest(a_list, total_quant):
 def make_blocks(a_df, percent, end_start, total_quant, code_dict, top_ten=False):
     code_totals = get_code_totals_from_date_range(a_df)
     code_totals_tuple = get_tuples_from_series(code_totals)
-    print(code_totals_tuple)
     code_greater_than = [
         (x[0],x[1],code_dict[x[0]][1])
         for i,x in enumerate(code_totals_tuple)
@@ -198,7 +208,7 @@ def title_styles(fs=12, ff='sans-serif', fw='normal',va='baseline', ha='center')
         'verticalalignment': va,
         'horizontalalignment': ha,
     })
-def title_position(x=0, pad=15):
+def title_position(x=0, pad=15, y=0):
     """For sup title use the following values:
 
     x=0.13, pad=0
@@ -206,6 +216,7 @@ def title_position(x=0, pad=15):
     return({
         'x':x,
         'pad':pad,
+        'y':y
     })
 def title_content_color(content="A title", color="black"):
     return {'label':content, 'color':color}
