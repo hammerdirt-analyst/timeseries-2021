@@ -76,9 +76,10 @@ def scatterPlot(**kwargs):
         ax.xaxis.set_major_formatter(years_fmt)
         ax.xaxis.set_minor_locator(months)
     elif(kwargs['ticks'] == 'months'):
-        ax.xaxis.set_major_locator(months)
-        ax.xaxis.set_major_formatter(months_fmt)
-        ax.xaxis.set_minor_locator(weeks)
+        ax.xaxis.set_major_locator(years)
+        ax.xaxis.set_major_formatter(years_fmt)
+        ax.xaxis.set_minor_locator(months)
+        ax.xaxis.set_minor_formatter(months_fmt)
     elif(kwargs['ticks']== 'days'):
         ax.xaxis.set_major_locator(weeks)
         ax.xaxis.set_major_formatter(days_fmt)
