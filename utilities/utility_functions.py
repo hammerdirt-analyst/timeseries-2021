@@ -20,16 +20,13 @@ import matplotlib.pyplot as plt
 idx = pd.IndexSlice
 
 def make_directory(needed, here):
-    """
-    Makes a directory with names from a list.
+    """Makes a directory with names from a list.
     """
     for folder in needed:
         place = here +"/"+ folder
         os.mkdir(place)
-
 def check_for_folders(folders, here):
-    """
-    Checks the names of the folder list against the currrent directory. If the result is not
+    """Checks the names of the folder list against the currrent directory. If the result is not
     an empty set then the required names are added to the directory structure.
     """
     current_dir = os.listdir()
@@ -41,10 +38,24 @@ def check_for_folders(folders, here):
         print("Added folders to the local working directory")
     else:
         print("Directory already in place")
+def make_project_folder(here, project_name):
+    """Makes a subdirectory with the specified 'project_name'
+    in the directory specified by 'here'.
+
+    Used in all notebooks that read or write data.
+    """
+    project_folder = '{}/{}'.format(here, project_name)
+    if os.path.isdir(project_folder):
+        project_folder = project_folder
+    else:
+        os.mkdir(project_folder)
+    return project_folder
 
 def make_folders(folders, here):
-    """
-    A dcitionary for locating folders in the directory.
+    """Takes an array of directory names and one directory. Returns
+    a dcitionary of named directories ie.. {'name':'a/file/path/'}.
+
+    Used in all notebooks that read or write data.
     """
     my_folders = {}
     for folder in folders:
@@ -52,16 +63,19 @@ def make_folders(folders, here):
         my_folders[folder] = place
     return my_folders
 def get_the_data(end_points):
-    """
-    Takes an api url and returns a response object
+    """Takes an array of 2d tuples or arrays ('name', 'url') and
+    returns a dictionary of named data objects.
+
+    Used in all notebooks that read or write data.
     """
     data = {}
     for pair in end_points:
         data[pair[0]] = requests.get(pair[1])
     return data
 def write_the_data(aDict, here):
-    """
-    Writes the response objects to local in JSON
+    """Writes the response objects (a JSON object) to the provided location.
+
+    Used in notebooks that make an api call
     """
     file_names = list(aDict.keys())
     outPut = []
@@ -73,19 +87,25 @@ def write_the_data(aDict, here):
 
     print(outPut)
 def put_the_data_to_local(end_points, here):
-    """
-    Gets the data and writes it to a local JSON file
+    """Gets the data from the provided URL and writes it to the provided location.
+
+    Used in notebooks that make an api call
     """
     the_dict = get_the_data(end_points)
     write_the_data(the_dict, here)
 def json_file_get(this_path):
-    """
-    Reads the local JSON in
+    """Reads the local JSON in from the provided file path.
+
+    Used in all notebooks that read in JSON data.
     """
     with open(this_path, 'r') as infile:
         data = json.load(infile)
         return data
 def unpack_survey_results(survey_results):
+    """Unpacks the surveys-results api-endpoint and adds the location name to each result dict.
+
+    Used in notebooks that make an api call to 'https://mwshovel.pythonanywhere.com/api/surveys/daily-totals/code-totals/swiss/'
+    """
     unpacked = []
     for location_data in survey_results:
         location = location_data['location']
@@ -94,6 +114,10 @@ def unpack_survey_results(survey_results):
             unpacked.append(each_dict)
     return unpacked
 def unpack_daily_totals(survey_results):
+    """Unpacks the daily-totals api-endpoint. Returns an array of dictionaries. One dictionary for each day.
+
+    Used in notebooks that make an api call to 'https://mwshovel.pythonanywhere.com/api/surveys/daily-totals/swiss/'
+    """
     unpacked = []
     for location_data in survey_results:
         location = location_data['location']
@@ -105,6 +129,11 @@ def unpack_daily_totals(survey_results):
             unpacked.append(day_total)
     return unpacked
 def json_file_to_csv(the_jsons, prefix):
+    """Retrieves the specified JSON files and converts to .csv. Takes an array of 2d tuples:
+    ('desired_file_name','path/to/json') and a prefix directory ie.. '/this/is/the/directory/'
+
+    Used in any notebook that is saving JSON to .csv
+    """
     for obj in the_jsons:
         the_dict = json_file_get(obj[1])
         keys = the_dict[0].keys()
@@ -114,112 +143,45 @@ def json_file_to_csv(the_jsons, prefix):
             dict_writer.writeheader()
             dict_writer.writerows(the_dict)
 def dict_to_csv(the_dict, a_name, prefix):
+    """Converts an array of dicts to a .csv file.
+
+    Used to convert 'unpack_survey_results' and 'unpacked_daily_totals' to .csv
+    """
     keys = the_dict[0].keys()
     file_name = '{}/{}.csv'.format(prefix, a_name)
     with open(file_name, 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(the_dict)
-
-def getIndexValues(aDf, anInt):
-    return aDf.index.get_level_values(anInt).unique()
-def getSummaryByKeyValue(aDf, anInt):
-    aList = list(getIndexValues(aDf, anInt))
-    theSummaries = {}
-    for key in aList:
-        aSummary = aDf.loc[key].describe().to_dict()
-        theSummaries.update({key:aSummary["pcs_m"]})
-    return aList, theSummaries
-def convertStringToDate(aTuple):
-    convertedDates = []
-    for pair in aTuple:
-        newPair = (datetime.datetime.strptime(pair[0], "%Y-%m-%d"), datetime.datetime.strptime(pair[1], "%Y-%m-%d"))
-        convertedDates.append(newPair)
-    return convertedDates
-def getSummaryByKeyValueMulti(aDf, anInt):
-    aList = list(getIndexValues(aDf, anInt))
-    theSummaries = {}
-    for key in aList:
-        aSummary = aDf.loc[idx[:,key,:,:], :].describe().to_dict()
-        theSummaries.update({key:aSummary["pcs_m"]})
-    return aList, theSummaries
-def makeListOfBars(aDict, aKey):
-    aList = []
-    theKeys = aDict.keys()
-    for key in theKeys:
-        values = aDict[key][aKey]
-        aList.append([key,values])
-    return aList
-def sortInReverse(the_data, anIndex):
-    the_data_sorted = sorted(the_data, key=lambda row: row[anIndex], reverse=True)
-    return the_data_sorted
-def percent_of_total_and_frequency(quantDict, freqDict, total, num_samps):
-    new_dict = {}
-    for k,v in quantDict.items():
-        freq = freqDict[k]
-        new_dict.update({k:[v,v/total,freq,freq/num_samps]})
-    return new_dict
-def quantity_frequency(quant, freq, codes):
-    qVsF = []
-    for code in codes:
-        qVsF.append([code, quant[code], freq[code]])
-    return qVsF
 def get_data_by_date_range(a_df, date_range):
+    """Slices a dataframe by the given data range.
+
+    Used in notebooks using pandas with a column called py_date
+    """
     this_data = a_df[a_df['py_date'].between(date_range[0], date_range[1])]
     return this_data
 def get_code_totals_from_date_range(a_df):
     return a_df.groupby(['code'])["quantity"].aggregate(np.sum).sort_values(ascending=False)
-def get_code_frequency_from_date_range(data):
-    return a_df.groupby(["code"])['code'].count().sort_values(ascending=False)
-def get_num_samps(a_df):
-    return a_df[['location_id', 'py_date','quantity']].groupby(['location_id', 'py_date']).sum().count().values[0]
 def get_tuples_from_series(a_df):
+    """Makes a 2d tuple from the index value and column value of a
+    dataframe of series with one column and an index
+    """
     return list(zip(a_df.index, a_df))
 def get_the_rest(a_list, total_quant):
+    """Returns the difference between some given value and the sum of an array of 2d tuples.
+    """
     some_number = 0
     for x in a_list:
         some_number += x[1]
     return total_quant - some_number
-def make_blocks(a_df, percent, end_start, total_quant, code_dict, top_ten=False):
-    code_totals = get_code_totals_from_date_range(a_df)
-    code_totals_tuple = get_tuples_from_series(code_totals)
-    code_greater_than = [
-        (x[0],x[1],code_dict[x[0]][1])
-        for i,x in enumerate(code_totals_tuple)
-        if x[1] >= percent
-    ]
-    the_rest = get_the_rest(code_greater_than, total_quant)
-    code_greater_than.append(("Other", the_rest,"*All other objects"))
-    return code_greater_than
+
 def start_end_date(start, end, date_format):
+    """Returns a tuple datetime objects (start, end) from string dates using the given format.
+    """
     return ((datetime.datetime.strptime(start, date_format), datetime.datetime.strptime(end, date_format)))
 def a_color_map(color_map_name='PuBuGn', look_up_table_entries=100):
     # provide a color map https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html
     return plt.cm.get_cmap(color_map_name,look_up_table_entries)
-def title_styles(fs=12, ff='sans-serif', fw='normal',va='baseline', ha='center'):
-    """For sup title use the following values:
-
-    ff='sans-serif', fw='roman', fs=14, ha='left', va='baseline'
-    """
-    return ({
-        'fontsize': fs,
-        'fontfamily':ff,
-        'fontweight': fw,
-        'verticalalignment': va,
-        'horizontalalignment': ha,
-    })
-def title_position(x=0, pad=15, y=0):
-    """For sup title use the following values:
-
-    x=0.13, pad=0
-    """
-    return({
-        'x':x,
-        'pad':pad,
-        'y':y
-    })
-def title_content_color(content="A title", color="black"):
-    return {'label':content, 'color':color}
 def legend_style(t_fs=14, fs=11, b_box_a=(1,1.02), loc='upper left', title=None):
     return({
         "title_fontsize":t_fs,
@@ -246,18 +208,10 @@ def adjust_subplot_params(left=0.125, right=0.9, bottom=0.1,
             "wspace":wspace, "hspace":hspace})
 def file_params(folder, file_name, file_suffix):
     return {'folder':folder, 'file_name':file_name, 'file_suffix':file_suffix}
-def save_the_figure(folder='a/file/path/', file_name='a_file', file_suffix='.svg'):
-    save_me = '{}/{}{}'.format(folder, file_name, file_suffix)
-    plt.savefig(save_me, bbox_inches="tight")
-def make_stacked_blocks(the_data, ax, color):
-    the_bottom = 0
-    for i,block in enumerate(the_data):
-            if i == 0:
-                ax.bar(1, block[1], color=next(color), edgecolor="white", alpha=0.9,
-                        label="{}: {:,}".format(block[2],block[1]))
-                the_bottom += block[1]
-            else:
-                ax.bar(1, block[1], color=next(color), edgecolor="white",alpha=0.9,
-                       bottom=the_bottom,
-                       label="{}: {:,}".format(block[2],block[1]))
-                the_bottom += block[1]
+def save_the_figure(folder='a/file/path/', file_name='a_file', file_suffix=[]):
+    for ext in file_suffix:
+        save_me = '{}/{}{}'.format(folder, file_name, ext)
+        if ext == '.jpeg':
+            plt.savefig(save_me, bbox_inches="tight", dpi=300)
+        else:
+            plt.savefig(save_me, bbox_inches="tight")

@@ -51,16 +51,22 @@ def scatterPlot(**kwargs):
               )
 
     plt.subplots_adjust(**kwargs['subplot_params'])
-    plt.title(**kwargs['the_title'], fontdict=kwargs['title_style'], **kwargs['the_title_position'])
+    plt.title(
+        kwargs['the_title']['label'],
+        fontdict=kwargs['title_style'],
+        pad=kwargs['the_title_position']['pad'],
+        loc=kwargs['the_title_position']['loc'],
+        )
     plt.suptitle(kwargs['the_sup_title']['label'],
-                 fontsize=kwargs['sup_title_style']['fontsize'],
-                 color=kwargs['the_sup_title']['color'],
+                 fontdict=kwargs['sup_title_style'],
+                 # color=kwargs['sup_title_style']['color'],
                  x=kwargs['sup_title_position']['x'],
                  y=kwargs['sup_title_position']['y'],
-                 ha=kwargs['sup_title_style']['horizontalalignment']
+                 va=kwargs['sup_title_position']['va'],
+                 ha=kwargs['sup_title_position']['ha']
                 )
+
     plt.grid(b=True, which='major', axis='both')
-    kwargs['x_tick_date']
 
     years = mdates.YearLocator()
     months = mdates.MonthLocator()
